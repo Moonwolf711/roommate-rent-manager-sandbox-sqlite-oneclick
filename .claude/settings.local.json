@@ -16,7 +16,9 @@
       "Bash(start http://localhost:3000)",
       "Bash(vercel:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm i:*)"
     ],
     "deny": []
   }
