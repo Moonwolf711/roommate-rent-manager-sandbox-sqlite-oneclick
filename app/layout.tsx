@@ -1,5 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+
 export const metadata: Metadata = { title: 'Roommate Rent Manager (Sandbox)', description: 'Local SQLite sandbox build' }
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="p-4 lg:p-6 container">{children}</main>
           </div>
         </div>
+        <SpeedInsights />
       </body>
     </html>
   )
