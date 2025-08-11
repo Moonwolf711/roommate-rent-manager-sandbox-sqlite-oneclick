@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Household {
+  id         String      @id @default(cuid())
+  name       String
+  address    String?
+  leases     Lease[]
+  payments   Payment[]
+  expenses   Expense[]
+  houseRules HouseRule[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Lease {
+  id               String    @id @default(cuid())
+  household        Household @relation(fields: [householdId], references: [id])
+  householdId      String
+  rent             Int
+  baseRent         Int?
+  petRent          Int?
+  securityDeposit  Int?
+  dueDay           Int
+  graceThroughDay  Int
+  lateFeePolicy    LateFeePolicy?
+  members          LeaseMember[]
+  shares           LeaseShare[]
+  pets             Pet[]
+  utilities        Utility[]
+  landlords        String?
+  propertyManager  String?
+  maxOccupants     Int?
+  allocationMethod String    @default("EQUAL") // EQUAL | PERCENT | ROOM_RENT
+  startAt          DateTime
+  endAt            DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model LeaseShare {
+  id           String       @id @default(cuid())
+  lease        Lease        @relation(fields: [leaseId], references: [id])
+  leaseId      String
+  member       LeaseMember  @relation("LeaseShareMember", fields: [memberId], references: [id])
+  memberId     String
+  percentBps   Int?
+  amountCents  Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([leaseId, memberId])
+}
+
+model LeaseMember {
+  id            String        @id @default(cuid())
+  lease         Lease         @relation(fields: [leaseId], references: [id])
+  leaseId       String
+  userId        String?
+  name          String
+  shares        LeaseShare[]  @relation("LeaseShareMember")
+  payments      Payment[]     @relation("PaymentMember")
+  paidExpenses  Expense[]     @relation("ExpensePayer")
+  createdAt     DateTime      @default(now())
+}
+
+model LateFeePolicy {
+  id        String  @id @default(cuid())
+  lease     Lease   @relation(fields: [leaseId], references: [id])
+  leaseId   String  @unique
+  type      String  @default("FLAT") // FLAT | PER_DAY
+  amount    Int
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  household    Household     @relation(fields: [householdId], references: [id])
+  householdId  String
+  amount       Int
+  payerName    String?
+  memberId     String?
+  member       LeaseMember?  @relation("PaymentMember", fields: [memberId], references: [id])
+  method       String?
+  note         String?
+  status       String        @default("SUCCEEDED") // SUCCEEDED | FAILED | PENDING
+  createdAt    DateTime      @default(now())
+}
+
+model Expense {
+  id             String        @id @default(cuid())
+  household      Household     @relation(fields: [householdId], references: [id])
+  householdId    String
+  amount         Int
+  label          String
+  payerMemberId  String?
+  payer          LeaseMember?  @relation("ExpensePayer", fields: [payerMemberId], references: [id])
+  splitMethod    String        @default("EQUAL") // EQUAL | PERCENT | ROOM_RENT
+  createdAt      DateTime      @default(now())
+}
+
+model Pet {
+  id               String    @id @default(cuid())
+  lease            Lease     @relation(fields: [leaseId], references: [id])
+  leaseId          String
+  type             String    // Dog, Cat, etc.
+  breed            String?
+  weight           String?
+  isNeuteredSpayed Boolean   @default(false)
+  monthlyFee       Int?
+  deposit          Int?
+  createdAt        DateTime  @default(now())
+}
+
+model Utility {
+  id             String    @id @default(cuid())
+  lease          Lease     @relation(fields: [leaseId], references: [id])
+  leaseId        String
+  type           String    // ELECTRICITY, GAS, WATER_SEWER, TRASH, INTERNET, etc.
+  responsibility String    // TENANT, LANDLORD, LANDLORD_BILLED
+  provider       String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+}
+
+model HouseRule {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  category    String    // QUIET_HOURS, CLEANLINESS, SHARED_SPACES, etc.
+  title       String
+  description String
+  icon        String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
